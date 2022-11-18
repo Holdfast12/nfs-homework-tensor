@@ -12,4 +12,7 @@ sudo systemctl enable nginx --now
 sudo systemctl enable vsftpd --now
 sudo firewall-cmd --zone=public --permanent --add-service=http --add-service=https --add-service=ftp
 sudo firewall-cmd --reload
+sudo sed -i 's/^SELINUX=enforcing/SELINUX=disabled/g' /etc/selinux/config
 sudo setenforce 0
+sudo hostname web-server
+sudo echo web-server > /etc/hostname
