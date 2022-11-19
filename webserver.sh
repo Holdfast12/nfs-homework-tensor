@@ -1,7 +1,7 @@
 #!/bin/bash
 sudo yum install -y epel-release && sudo yum install -y nginx mod_ssl vsftpd
 sudo rm -rf /etc/vsftpd/*
-sudo mkdir /etc/nginx/ssl /etc/vsftpd/users
+sudo mkdir /etc/nginx/ssl /etc/vsftpd/users /mnt/backups
 echo "root" | sudo tee /etc/vsftpd/chroot_list
 echo "root" | sudo tee /etc/vsftpd/user_list
 for i in {1,2}; do sudo mkdir /usr/share/nginx/kalyujniy-s$i.local && echo "kalyujniy-s$i test suite" | sudo tee /usr/share/nginx/kalyujniy-s$i.local/index.html; echo -en "server {\n        listen 80;\n        root /usr/share/nginx/kalyujniy-s$i.local;\n        index index.html index.htm;\n        server_name kalyujniy-s$i.local;\n        try_files \$uri \$uri/ = 404;\n}\n\nserver {\n        listen 443 ssl;\n        root /usr/share/nginx/kalyujniy-s$i.local;\n        index index.html index.htm;\n        server_name kalyujniy-s$i.local;\n        ssl_certificate /etc/nginx/ssl/kalyujniy-s$i.crt;\n        ssl_certificate_key /etc/nginx/ssl/kalyujniy-s$i.key;\n        ssl_protocols TLSv1 TLSv1.1 TLSv1.2;\n        ssl_ciphers HIGH:!aNULL:!MD5;\n}\n" | sudo tee /etc/nginx/conf.d/kalyujniy-s$i.local.conf; echo -e "RU\n\nYaroslavl\ntestorg\n\n\n" | openssl req -new -newkey rsa:2048 -days 365 -nodes -x509 -keyout /etc/nginx/ssl/kalyujniy-s$i.key -out /etc/nginx/ssl/kalyujniy-s$i.crt; sudo useradd -s /sbin/nologin kalyujniy-s$i && echo -e "kalyujniy-s$i\nkalyujniy-s$i" | sudo passwd kalyujniy-s$i; echo "local_root=/usr/share/nginx/kalyujniy-s$i.local/" | sudo tee /etc/vsftpd/users/kalyujniy-s$i; sudo chown -R kalyujniy-s$i. /usr/share/nginx/kalyujniy-s$i.local; echo "kalyujniy-s$i" | sudo tee -a /etc/vsftpd/user_list; done
@@ -16,3 +16,9 @@ sudo sed -i 's/^SELINUX=enforcing/SELINUX=disabled/g' /etc/selinux/config
 sudo setenforce 0
 sudo hostname web-server
 sudo echo web-server > /etc/hostname
+echo '*/1 * * * * root /usr/bin/tar -zcf /mnt/backups/kalyujniy-s1-`date +\%d-\%m-\%Y`.tar.gz -P /usr/share/nginx/kalyujniy-s1.local' | sudo tee -a /etc/crontab
+echo '*/1 * * * * root /usr/bin/tar -zcf /mnt/backups/kalyujniy-s2-`date +\%d-\%m-\%Y`.tar.gz -P /usr/share/nginx/kalyujniy-s2.local' | sudo tee -a /etc/crontab
+#примонтировать папку как на лекции
+#надо добавить в fstab
+#sudo mount -t nfs 192.168.1.3:/mnt/nfs_shares/backups /mnt/backups
+
